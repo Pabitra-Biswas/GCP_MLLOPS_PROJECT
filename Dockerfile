@@ -1,30 +1,22 @@
-# Use Google Container Registry Python image
-FROM gcr.io/google-appengine/python:3.11
+# 1. Use the official slim Python image from Docker Hub
+FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install system dependencies required by LightGBM
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
-    build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the application code
+# Copy and install your application
 COPY . .
+RUN pip install --no-cache-dir -e .
 
-# Install the package in editable mode
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -e .
+# 2. Ensure the training step is removed from here
 
-# Train the model before running the application
-RUN python pipeline/training_pipeline.py
-
-# Expose the port that Flask will run on
 EXPOSE 8080
-
-# Command to run the app
 CMD ["python", "application.py"]
